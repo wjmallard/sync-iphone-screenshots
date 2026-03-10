@@ -109,14 +109,16 @@ def _process_batch(photos: list) -> tuple[int, int]:
 def _process_one(photo) -> dict | None:
     """Process a single photo. Returns metadata dict for DB insertion."""
     output_path = _build_output_path(photo)
-    output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    if photo.hasadjustments:
-        if not _export_uncooked(photo, output_path):
-            return None
-    else:
-        if not _export_original(photo, output_path):
-            return None
+    # Skip export if the file already exists on disk
+    if not output_path.exists():
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        if photo.hasadjustments:
+            if not _export_uncooked(photo, output_path):
+                return None
+        else:
+            if not _export_original(photo, output_path):
+                return None
 
     return {
         "uuid": photo.uuid,
