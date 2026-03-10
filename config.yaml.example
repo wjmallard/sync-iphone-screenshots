@@ -1,0 +1,4 @@
+output_dir: ~/Desktop/Screenshots
+workers: 4
+db_name: screenshots.db
+commit_batch_size: 50
