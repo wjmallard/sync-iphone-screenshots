@@ -115,7 +115,8 @@ def _process_one(photo) -> dict | None:
         if not _export_uncooked(photo, output_path):
             return None
     else:
-        _export_original(photo, output_path)
+        if not _export_original(photo, output_path):
+            return None
 
     return {
         "uuid": photo.uuid,
@@ -125,8 +126,8 @@ def _process_one(photo) -> dict | None:
     }
 
 
-def _export_original(photo, output_path: Path):
-    """Export an unedited screenshot directly to the output path."""
+def _export_original(photo, output_path: Path) -> bool:
+    """Export an unedited photo directly to the output path. Returns False on failure."""
     filename = output_path.stem + output_path.suffix
     use_photos = photo.path is None
     with _export_lock:
@@ -135,8 +136,13 @@ def _export_original(photo, output_path: Path):
             sidecar_json=True, use_photos_export=use_photos,
         )
     if not exported:
-        raise RuntimeError(f"Failed to export unedited {photo.uuid}")
+        log.warning(
+            "Export failed for %s (%s), skipping",
+            photo.uuid, photo.original_filename,
+        )
+        return False
     log.debug("Exported original %s -> %s", photo.original_filename, output_path.name)
+    return True
 
 
 def _export_uncooked(photo, output_path: Path) -> bool:
